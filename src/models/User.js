@@ -65,7 +65,6 @@ const userSchema = new mongoose.Schema(
 );
 
 // ── Indexes ────────────────────────────────────────────────
-userSchema.index({ email: 1 });
 userSchema.index({ isOnline: 1 });
 
 // ── Hash password before save ──────────────────────────────

@@ -1,4 +1,4 @@
-# 💬 ChatApp – Backend
+# 💬 ChatSync – Backend
 
 Real-time chat application backend built with **Node.js · Express · MongoDB · WebSocket (ws)**
 
@@ -7,7 +7,7 @@ Real-time chat application backend built with **Node.js · Express · MongoDB ·
 ## 📁 Folder Structure
 
 ```
-chat-app-backend/
+ChatSync-Backend/
 ├── src/
 │   ├── api/
 │   │   └── v1/                          ← Versioned API (add v2/ here later)

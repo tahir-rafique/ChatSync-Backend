@@ -2,6 +2,8 @@
 
 Real-time chat application backend built with **Node.js · Express · MongoDB · WebSocket (ws)**
 
+Backend Live here: 
+https://chatsync-backend-w3ut.onrender.com/
 ---
 
 ## 📁 Folder Structure

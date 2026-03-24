@@ -29,11 +29,18 @@ const generateResetToken = () => {
 // ── Nodemailer Transporter ────────────────────────────────
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  secure: false,
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_PORT == 465, // Use true for port 465, false for 587
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
+  },
+  timeout: 10000,           // 10 seconds timeout for sending
+  connectionTimeout: 15000, // 15 seconds timeout for connecting
+  greetingTimeout: 10000,   // 10 seconds timeout for SMTP greeting
+  tls: {
+    // This can help with some handshake issues on certain cloud providers
+    rejectUnauthorized: false,
   },
 });
 

@@ -21,7 +21,7 @@ const { sendSuccess } = require("../../../../utils/response");
  *             type: object
  *             required: [email]
  *             properties:
- *               email: { type: string }
+ *               email: { type: string, example: "user@example.com" }
  *     responses:
  *       200:
  *         description: Success message regardless of email existence (to prevent enum)
@@ -43,7 +43,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     // 3) Construct reset URL and send email
     const resetUrl = `${process.env.CLIENT_URL}/reset-password/${raw}`;
-    await sendPasswordResetEmail(user, resetUrl);
+
+    try {
+        await sendPasswordResetEmail(user, resetUrl);
+    } catch (err) {
+        const logger = require("../../../../utils/logger");
+        logger.error(`Failed to send password reset email to ${user.email}:`, err);
+        // Do not throw; we want to return 200 for security even if the mailer fails
+    }
 
     // 4) Return success to client
     return sendSuccess(res, null, "If that email exists, a reset link has been sent.");

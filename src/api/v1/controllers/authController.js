@@ -184,7 +184,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   const resetUrl = `${process.env.CLIENT_URL}/reset-password/${raw}`;
-  await sendPasswordResetEmail(user, resetUrl);
+
+  try {
+    await sendPasswordResetEmail(user, resetUrl);
+  } catch (err) {
+    logger.error(`Failed to send password reset email to ${user.email}:`, err);
+    // We don't throw the error here to maintain the "always return success" security pattern
+    // and to prevent the API from crashing/returning 500 when it's just a mailer issue
+  }
 
   return sendSuccess(res, null, "If that email exists, a reset link has been sent.");
 });

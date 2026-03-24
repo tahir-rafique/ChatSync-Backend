@@ -78,10 +78,10 @@ const sendPasswordResetEmail = async (user, resetUrl) => {
 
 // ── Set Auth Cookies ──────────────────────────────────────
 const setAuthCookies = (res, accessToken, refreshToken) => {
-  const isProd = process.env.NODE_ENV === "production";
+  const isProd = process.env.NODE_ENV === "production" || process.env.RENDER;
   const cookieOptions = {
     httpOnly: true,
-    secure: isProd, // Should be true in production (HTTPS)
+    secure: isProd ? true : false, // Must be true for HTTPS/SameSite=None
     sameSite: isProd ? "none" : "lax", // Must be "none" for cross-site in production
   };
 

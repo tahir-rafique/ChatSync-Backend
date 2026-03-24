@@ -34,6 +34,7 @@ router.get("/friends", getFriends);
 router.get("/friends/requests", getPendingRequests);
 router.get("/:userId", mongoIdValidator("userId"), getUserById);
 router.put("/profile", upload.single("avatar"), updateProfile);
+router.patch("/profile", upload.single("avatar"), updateProfile);
 
 // Friend request management
 router.post("/friends/request/:userId", mongoIdValidator("userId"), sendFriendRequest);

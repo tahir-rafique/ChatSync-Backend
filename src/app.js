@@ -32,7 +32,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5000",
   "http://127.0.0.1:5000",
-].filter(Boolean);
+].filter(Boolean).map(o => o.trim().replace(/\/$/, ""));
 
 app.use(
   cors({
@@ -40,10 +40,19 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl, or same-origin)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === "development") {
+      const normalizedOrigin = origin.trim().replace(/\/$/, "");
+
+      const isAllowed =
+        allowedOrigins.includes(normalizedOrigin) ||
+        normalizedOrigin.endsWith(".vercel.app") ||
+        process.env.NODE_ENV === "development";
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS"));
+        // Logging for easier debugging in production
+        logger.warn(`CORS blocked for origin: ${origin}`);
+        callback(null, false);
       }
     },
     credentials: true,

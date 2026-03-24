@@ -78,17 +78,19 @@ const sendPasswordResetEmail = async (user, resetUrl) => {
 
 // ── Set Auth Cookies ──────────────────────────────────────
 const setAuthCookies = (res, accessToken, refreshToken) => {
-  const secure = process.env.NODE_ENV === "production";
-  res.cookie("accessToken", accessToken, {
+  const isProd = process.env.NODE_ENV === "production";
+  const cookieOptions = {
     httpOnly: true,
-    secure,
-    sameSite: "strict",
+    secure: isProd, // Should be true in production (HTTPS)
+    sameSite: isProd ? "none" : "lax", // Must be "none" for cross-site in production
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure,
-    sameSite: "strict",
+    ...cookieOptions,
     maxAge: 30 * 24 * 60 * 60 * 1000,
   });
 };

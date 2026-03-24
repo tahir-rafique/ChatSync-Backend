@@ -11,6 +11,21 @@ const path = require("path");
 const { swaggerUi, swaggerSpec } = require("./config/swagger");
 const { errorHandler, notFound } = require("./middlewares/errorHandler");
 const logger = require("./utils/logger");
+const fs = require("fs");
+
+// ── Ensure Upload Directories ─────────────────────────────
+const uploadDirs = [
+  "src/uploads/images",
+  "src/uploads/videos",
+  "src/uploads/audios",
+  "src/uploads/files",
+];
+uploadDirs.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    logger.info(`📁 Created directory: ${dir}`);
+  }
+});
 
 // ── Route Imports ─────────────────────────────────────────
 const v1Routes = require("./api/v1/routes");

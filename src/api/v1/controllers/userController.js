@@ -3,6 +3,7 @@ const AppError = require("../../../utils/AppError");
 const asyncHandler = require("../../../utils/asyncHandler");
 const { sendSuccess, sendPaginated } = require("../../../utils/response");
 const { broadcastToFriends, sendToUser } = require("../../../websocket/wsServer");
+const logger = require("../../../utils/logger");
 
 /**
  * @swagger
@@ -145,38 +146,48 @@ const getUserById = asyncHandler(async (req, res) => {
  *         description: Profile updated
  */
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phone } = req.body;
-  const updates = {};
+  try {
+    const { name, phone } = req.body;
+    const updates = {};
 
-  if (name && name.trim()) updates.name = name.trim();
-  if (phone !== undefined) updates.phone = phone.trim() || null;
-  if (req.file) {
-    const folder = req.file.mimetype.startsWith("image") ? "images" :
-      req.file.mimetype.startsWith("video") ? "videos" :
-        req.file.mimetype.startsWith("audio") ? "audios" : "files";
-    updates.avatar = `/uploads/${folder}/${req.file.filename}`;
+    if (name && name.trim()) updates.name = name.trim();
+    if (phone !== undefined) updates.phone = (phone && typeof phone === 'string') ? phone.trim() : null;
+
+    if (req.file) {
+      const folder = req.file.mimetype.startsWith("image") ? "images" :
+        req.file.mimetype.startsWith("video") ? "videos" :
+          req.file.mimetype.startsWith("audio") ? "audios" : "files";
+      updates.avatar = `/uploads/${folder}/${req.file.filename}`;
+    }
+
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, runValidators: true });
+    if (!user) throw new AppError("User not found", 404);
+
+    const publicUser = user.toPublic();
+    // Normalize _id to id for frontend compatibility
+    publicUser.id = publicUser._id?.toString() || publicUser.id;
+
+    // ── Broadcast Update via WebSocket ───────────────────────
+    try {
+      const socketPayload = {
+        userId: user._id.toString(),
+        name: user.name,
+        avatar: user.avatar,
+      };
+
+      // Notify friends so their sidebars/friend lists update
+      broadcastToFriends(user, { type: "PROFILE_UPDATED", payload: socketPayload });
+      // Notify user's other sessions (if any)
+      sendToUser(user._id.toString(), { type: "PROFILE_UPDATED", payload: socketPayload });
+    } catch (wsErr) {
+      logger.error("WebSocket broadcast failed during profile update:", wsErr);
+    }
+
+    return sendSuccess(res, { user: publicUser }, "Profile updated");
+  } catch (err) {
+    logger.error("Profile update controller error:", err);
+    throw err; // Forward to global error handler
   }
-
-  const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true, runValidators: true });
-  if (!user) throw new AppError("User not found", 404);
-
-  const publicUser = user.toPublic();
-  // Normalize _id to id for frontend compatibility
-  publicUser.id = publicUser._id?.toString() || publicUser.id;
-
-  // ── Broadcast Update via WebSocket ───────────────────────
-  const socketPayload = {
-    userId: user._id.toString(),
-    name: user.name,
-    avatar: user.avatar,
-  };
-
-  // Notify friends so their sidebars/friend lists update
-  broadcastToFriends(user, { type: "PROFILE_UPDATED", payload: socketPayload });
-  // Notify user's other sessions (if any)
-  sendToUser(user._id.toString(), { type: "PROFILE_UPDATED", payload: socketPayload });
-
-  return sendSuccess(res, { user: publicUser }, "Profile updated");
 });
 
 /**
